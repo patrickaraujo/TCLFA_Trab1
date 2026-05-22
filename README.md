@@ -157,6 +157,3 @@ O código contém:
 ## Autor
 
 Trabalho desenvolvido para a disciplina de Teoria da Computação, Linguagens Formais e Autômatos.
-
-```
-```
