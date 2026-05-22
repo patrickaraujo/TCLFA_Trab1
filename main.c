@@ -1,149 +1,152 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-
 /**
 *   @author Patrick Araújo: https://github.com/patrickaraujo
 *   Trabalho 1 de Teoria da Computação, Linguagens Formais e Autômatos
 */
 
-int scanner(char *x){
-    int i = 0;
-    char c;
+#include <stdio.h>
+#include <string.h>
 
+typedef enum {
+    Q0,     // palavra vazia
+    QA, QB,
+    QAA, QAB, QBA, QBB,
+    QAAA, QAAB, QABA, QABB, QBAA, QBAB, QBBA, QBBB
+} Estado;
 
-    q0: c = x[i];
-    if(c == 'a'){
-        i++;
-        goto q0;
-    }
-    else if(c == 'b'){
-        i++;
-        goto q1;
-        //  return scanner2(x);
-    }
-    else return 0;
+/*
+ Função de transição do AFD.
+ Ela guarda sempre os últimos até 3 símbolos lidos.
+*/
+Estado delta(Estado q, char simbolo) {
+    switch (q) {
+        case Q0:
+            if (simbolo == 'a') return QA;
+            if (simbolo == 'b') return QB;
+            break;
 
+        case QA:
+            if (simbolo == 'a') return QAA;
+            if (simbolo == 'b') return QAB;
+            break;
 
-    q1: c = x[i];
-    //  if(c == 'a' || c == 'b'){
-    if(c == 'b'){
-        i++;
-        goto q2;
-    }
-    else if (c == 'a'){
-        i++;
-        goto q3;
-        //  return scanner2(x);
-    }
-    else return 0;
+        case QB:
+            if (simbolo == 'a') return QBA;
+            if (simbolo == 'b') return QBB;
+            break;
 
+        case QAA:
+            if (simbolo == 'a') return QAAA;
+            if (simbolo == 'b') return QAAB;
+            break;
 
-    q2: c = x[i];
-    if(c == 'b'){
-        i++;
-        goto q4;
-    }
-    else if(c == 'a'){
-        i++;
-        goto q5;
-    }
-    else return 0;
+        case QAB:
+            if (simbolo == 'a') return QABA;
+            if (simbolo == 'b') return QABB;
+            break;
 
+        case QBA:
+            if (simbolo == 'a') return QBAA;
+            if (simbolo == 'b') return QBAB;
+            break;
 
-    q3: c = x[i];
-    if(c == 'b'){
-        i++;
-        goto q6;
-    }
-    else if(c == 'a'){
-        i++;
-        goto q7;
-    }
-    else return 0;
+        case QBB:
+            if (simbolo == 'a') return QBBA;
+            if (simbolo == 'b') return QBBB;
+            break;
 
+        case QAAA:
+            if (simbolo == 'a') return QAAA;
+            if (simbolo == 'b') return QAAB;
+            break;
 
-    q4: c = x[i];
-    if( !c )
-        return 1;
-    else if( c == 'b'){
-        i++;
-        goto q4;
-    }
-    else if( c == 'a'){
-        i++;
-        goto q5;
-    }
-    else return 0;
+        case QAAB:
+            if (simbolo == 'a') return QABA;
+            if (simbolo == 'b') return QABB;
+            break;
 
+        case QABA:
+            if (simbolo == 'a') return QBAA;
+            if (simbolo == 'b') return QBAB;
+            break;
 
-    q5: c = x[i];
-    if( !c )
-        return 1;
-    else if( c == 'b'){
-        i++;
-        goto q6;
-    }
-    else if( c == 'a'){
-        i++;
-        goto q7;
-    }
-    else return 0;
+        case QABB:
+            if (simbolo == 'a') return QBBA;
+            if (simbolo == 'b') return QBBB;
+            break;
 
+        case QBAA:
+            if (simbolo == 'a') return QAAA;
+            if (simbolo == 'b') return QAAB;
+            break;
 
-    q6: c = x[i];
-    if( !c )
-        return 1;
-    else if( c == 'b'){
-        i++;
-        goto q2;
-    }
-    else if( c == 'a'){
-        i++;
-        goto q3;
-    }
-    else return 0;
+        case QBAB:
+            if (simbolo == 'a') return QABA;
+            if (simbolo == 'b') return QABB;
+            break;
 
+        case QBBA:
+            if (simbolo == 'a') return QBAA;
+            if (simbolo == 'b') return QBAB;
+            break;
 
-    q7: c = x[i];
-    if( !c )
-        return 1;
-    else if( c == 'b'){
-        i++;
-        goto q1;
+        case QBBB:
+            if (simbolo == 'a') return QBBA;
+            if (simbolo == 'b') return QBBB;
+            break;
     }
-    else if( c == 'a'){
-        i++;
-        goto q0;
-    }
-    else return 0;
+
+    return -1;
 }
 
-char *EntraString(){
-    fflush(stdin);
-    char tecla;
-    char *retorno=NULL;
-    int tam=0;
-    do {
-        tecla=getchar();
-        if(!retorno)
-            retorno=(char*)malloc(sizeof(char));
-        else
-            retorno=(char*)realloc(retorno,tam+1);
-        if(tecla != '\n')
-            retorno[tam]=tecla;
-        tam++;
-    } while(tecla!='\n');
-    retorno[tam-1]='\0';
-    return retorno;
+/*
+ Função de transição estendida.
+ Caso base: se o tamanho da palavra é 0, retorna o próprio estado.
+ Caso indutivo: processa a palavra até o penúltimo símbolo
+ e depois aplica delta ao último símbolo.
+*/
+Estado deltaEstendida(Estado q, char palavra[], int tamanho) {
+    if (tamanho == 0) {
+        return q;
+    }
+
+    Estado estadoAnterior = deltaEstendida(q, palavra, tamanho - 1);
+    return delta(estadoAnterior, palavra[tamanho - 1]);
 }
 
-int main(){
-    printf("\nEntre com a palavra:\t");
-    char *palavra = EntraString();
-    if(scanner(palavra))
-        printf("\nPalavra reconhecida");
-    else
-        printf("\nPalavra nao reconhecida");
+int estadoFinal(Estado q) {
+    return q == QBAA || q == QBAB || q == QBBA || q == QBBB;
+}
+
+int palavraValida(char palavra[]) {
+    for (int i = 0; palavra[i] != '\0'; i++) {
+        if (palavra[i] != 'a' && palavra[i] != 'b') {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+int main() {
+    char palavra[100];
+
+    printf("Digite uma palavra sobre {a,b}: ");
+    fgets(palavra, sizeof(palavra), stdin);
+
+    palavra[strcspn(palavra, "\n")] = '\0';
+
+    if (!palavraValida(palavra)) {
+        printf("Palavra invalida. Use apenas os simbolos 'a' e 'b'.\n");
+        return 1;
+    }
+
+    Estado estadoFinalAFD = deltaEstendida(Q0, palavra, strlen(palavra));
+
+    if (estadoFinal(estadoFinalAFD)) {
+        printf("Palavra ACEITA.\n");
+    } else {
+        printf("Palavra REJEITADA.\n");
+    }
+
     return 0;
 }
